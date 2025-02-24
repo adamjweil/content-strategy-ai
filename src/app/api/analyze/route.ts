@@ -1,130 +1,238 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Make sure to add this to your .env.local file
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function fetchContent(url: string) {
-  const response = await axios.get(url);
-  const $ = cheerio.load(response.data);
-  
-  // Remove script tags and styles
-  $('script').remove();
-  $('style').remove();
-  
-  const title = $('title').text();
-  const metaDescription = $('meta[name="description"]').attr('content') || '';
-  const h1s = $('h1').map((_, el) => $(el).text()).get();
-  const content = $('body').text().trim();
-  
-  return {
-    title,
-    metaDescription,
-    h1s,
-    content: content.substring(0, 5000), // Limit content length for API calls
-    wordCount: content.split(/\s+/).length,
-  };
-}
-
-async function analyzeWithAI(content: any) {
-  const prompt = `Analyze this web content and provide a comprehensive content strategy. Include SEO recommendations, content quality assessment, and specific improvements.
-  
-  Title: ${content.title}
-  Meta Description: ${content.metaDescription}
-  H1s: ${content.h1s.join(', ')}
-  Content Preview: ${content.content.substring(0, 1000)}...
-  
-  Provide analysis in the following JSON format:
-  {
-    "summary": {
-      "overview": "Brief overview of the content",
-      "strengths": ["list", "of", "strengths"],
-      "weaknesses": ["list", "of", "weaknesses"]
-    },
-    "seoAnalysis": {
-      "score": "0-100",
-      "recommendations": ["list", "of", "recommendations"]
-    },
-    "contentQuality": {
-      "score": "0-100",
-      "suggestions": ["list", "of", "improvements"]
-    },
-    "strategy": {
-      "targetAudience": "description",
-      "contentGaps": ["list", "of", "gaps"],
-      "actionItems": ["list", "of", "actions"]
-    }
-  }`;
-
+async function generateOverallStrategy(individualResults: any[]) {
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "user", content: prompt }],
-    model: "gpt-4-turbo-preview",
-    response_format: { type: "json_object" }
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content: "You are a content strategy expert. Analyze multiple pieces of content to derive an overall content strategy."
+      },
+      {
+        role: "user",
+        content: `Analyze these content pieces and provide a comprehensive content strategy. Here are the individual analyses: ${JSON.stringify(individualResults)}`
+      }
+    ],
+    functions: [
+      {
+        name: "analyze_overall_strategy",
+        description: "Analyze multiple content pieces and provide a comprehensive strategy",
+        parameters: {
+          type: "object",
+          properties: {
+            contentAudit: {
+              type: "object",
+              properties: {
+                contentTypes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: { type: "string" },
+                      frequency: { type: "string" },
+                      effectiveness: { type: "string" }
+                    }
+                  }
+                },
+                writingStyles: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      style: { type: "string" },
+                      usage: { type: "string" },
+                      impact: { type: "string" }
+                    }
+                  }
+                }
+              }
+            },
+            audienceAnalysis: {
+              type: "object",
+              properties: {
+                primaryAudiences: { type: "array", items: { type: "string" } },
+                audienceNeeds: { type: "array", items: { type: "string" } },
+                engagementPatterns: { type: "string" }
+              }
+            },
+            contentGaps: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  topic: { type: "string" },
+                  opportunity: { type: "string" },
+                  priority: { type: "string" }
+                }
+              }
+            },
+            recommendations: {
+              type: "object",
+              properties: {
+                contentMix: { type: "string" },
+                topicClusters: { type: "array", items: { type: "string" } },
+                contentCalendar: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      contentType: { type: "string" },
+                      frequency: { type: "string" },
+                      focus: { type: "string" }
+                    }
+                  }
+                }
+              }
+            },
+            brandVoice: {
+              type: "object",
+              properties: {
+                currentTone: { type: "string" },
+                consistencyScore: { type: "string" },
+                improvements: { type: "array", items: { type: "string" } }
+              }
+            },
+            actionPlan: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  action: { type: "string" },
+                  timeline: { type: "string" },
+                  expectedImpact: { type: "string" }
+                }
+              }
+            }
+          },
+          required: ["contentAudit", "audienceAnalysis", "contentGaps", "recommendations", "brandVoice", "actionPlan"]
+        }
+      }
+    ],
+    function_call: { name: "analyze_overall_strategy" }
   });
 
-  // Fix the type error by adding a null check
-  const content_response = completion.choices[0].message.content;
-  if (!content_response) {
-    throw new Error('No response from OpenAI');
-  }
-
-  return JSON.parse(content_response);
+  return JSON.parse(completion.choices[0].message.function_call?.arguments || '{}');
 }
 
 export async function POST(request: Request) {
   try {
     const { urls } = await request.json();
 
-    if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      return NextResponse.json(
-        { error: 'URLs array is required' },
-        { status: 400 }
-      );
-    }
+    // Process each URL
+    const individualResults = await Promise.all(urls.map(async (url: string) => {
+      try {
+        // Fetch the content from the URL
+        const response = await fetch(url);
+        const html = await response.text();
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key is not configured' },
-        { status: 500 }
-      );
-    }
+        // Extract text content (basic example - you might want to use a proper HTML parser)
+        const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-    // Process multiple URLs in parallel
-    const results = await Promise.all(
-      urls.map(async (url) => {
-        try {
-          const content = await fetchContent(url);
-          const analysis = await analyzeWithAI(content);
-          return {
-            url,
-            content: {
-              title: content.title,
-              wordCount: content.wordCount,
+        // Use OpenAI to analyze the content
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a content strategy expert. Analyze the provided content and provide detailed insights."
             },
-            analysis,
-            status: 'success'
-          };
-        } catch (error) {
-          console.error(`Error analyzing ${url}:`, error);
-          return {
-            url,
-            status: 'error',
-            error: 'Failed to analyze content'
-          };
-        }
-      })
-    );
+            {
+              role: "user",
+              content: `Analyze this content from ${url}: ${textContent.substring(0, 4000)}`
+            }
+          ],
+          functions: [
+            {
+              name: "analyze_content",
+              description: "Analyze content and provide structured feedback",
+              parameters: {
+                type: "object",
+                properties: {
+                  content: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      wordCount: { type: "number" }
+                    }
+                  },
+                  analysis: {
+                    type: "object",
+                    properties: {
+                      summary: {
+                        type: "object",
+                        properties: {
+                          overview: { type: "string" },
+                          strengths: { type: "array", items: { type: "string" } },
+                          weaknesses: { type: "array", items: { type: "string" } }
+                        }
+                      },
+                      seoAnalysis: {
+                        type: "object",
+                        properties: {
+                          score: { type: "string" },
+                          recommendations: { type: "array", items: { type: "string" } }
+                        }
+                      },
+                      contentQuality: {
+                        type: "object",
+                        properties: {
+                          score: { type: "string" },
+                          suggestions: { type: "array", items: { type: "string" } }
+                        }
+                      },
+                      strategy: {
+                        type: "object",
+                        properties: {
+                          targetAudience: { type: "string" },
+                          contentGaps: { type: "array", items: { type: "string" } },
+                          actionItems: { type: "array", items: { type: "string" } }
+                        }
+                      }
+                    }
+                  }
+                },
+                required: ["content", "analysis"]
+              }
+            }
+          ],
+          function_call: { name: "analyze_content" }
+        });
 
-    return NextResponse.json({ results });
+        const analysisResult = JSON.parse(completion.choices[0].message.function_call?.arguments || '{}');
+
+        return {
+          url,
+          ...analysisResult,
+          status: 'success',
+          analyzedAt: new Date().toISOString()
+        };
+
+      } catch (error) {
+        console.error(`Error analyzing ${url}:`, error);
+        return {
+          url,
+          status: 'error',
+          error: 'Failed to analyze content',
+          analyzedAt: new Date().toISOString()
+        };
+      }
+    }));
+
+    // Generate overall strategy based on all results
+    const overallStrategy = await generateOverallStrategy(individualResults);
+
+    return NextResponse.json({
+      results: individualResults,
+      overallStrategy
+    });
+
   } catch (error) {
-    console.error('Error analyzing content:', error);
-    return NextResponse.json(
-      { error: 'Failed to analyze content' },
-      { status: 500 }
-    );
+    console.error('Analysis error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

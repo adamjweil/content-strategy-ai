@@ -46,4 +46,14 @@ export interface Analysis {
   results: AnalysisResult[];
   overallStrategy: any; // You can create a specific type for this
   createdAt: string;
+}
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  description: string;
+  contentType: string;
+  date: Date;
+  audience: string;
+  focus: string;
 } 

@@ -45,6 +45,14 @@ interface OverallStrategy {
 }
 
 export function OverallStrategyCard({ strategy }: { strategy: OverallStrategy }) {
+  if (!strategy || !strategy.audienceAnalysis) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <p>Loading strategy data...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg space-y-8">
       <div className="border-b pb-4">
@@ -101,9 +109,9 @@ export function OverallStrategyCard({ strategy }: { strategy: OverallStrategy })
           <div>
             <h4 className="font-semibold mb-2">Audience Needs</h4>
             <ul className="list-disc pl-5">
-              {strategy.audienceAnalysis.audienceNeeds.map((need, index) => (
+              {strategy.audienceAnalysis.audienceNeeds?.map((need, index) => (
                 <li key={index}>{need}</li>
-              ))}
+              )) || <li>No audience needs specified</li>}
             </ul>
           </div>
           <div>

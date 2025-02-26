@@ -16,7 +16,7 @@ export default function AnalysisPage() {
   const [overallStrategy, setOverallStrategy] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeResultIndex, setActiveResultIndex] = useState(0);
-  const [view, setView] = useState<'individual' | 'overall'>('individual');
+  const [view, setView] = useState<'individual' | 'overall'>('overall');
 
   // Fetch all analyses for the user
   useEffect(() => {
@@ -191,18 +191,8 @@ export default function AnalysisPage() {
     <div className="space-y-6">
       {allAnalyses.length > 0 ? (
         <>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setView('individual')}
-                className={`px-4 py-2 rounded-lg ${
-                  view === 'individual'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                Individual Analysis
-              </button>
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-x-2">
               <button
                 onClick={() => setView('overall')}
                 className={`px-4 py-2 rounded-lg ${
@@ -212,6 +202,16 @@ export default function AnalysisPage() {
                 }`}
               >
                 Overall Strategy
+              </button>
+              <button
+                onClick={() => setView('individual')}
+                className={`px-4 py-2 rounded-lg ${
+                  view === 'individual'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                Individual Analysis
               </button>
             </div>
 

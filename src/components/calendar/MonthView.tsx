@@ -15,6 +15,17 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
     setLocalContentCalendar(contentCalendar);
   }, [contentCalendar]);
 
+  const getContentColor = (contentType: string) => {
+    const colors: { [key: string]: string } = {
+      'Blog Post': 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+      'Social Media': 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+      'Newsletter': 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
+      'Video': 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100',
+      'Podcast': 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+    };
+    return colors[contentType] || 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100';
+  };
+
   // Title templates for content generation
   const titleTemplates = [
     (topic: string, audience: string) => `The Ultimate Guide to ${topic} for ${audience}`,
@@ -93,8 +104,8 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
   // Add empty cells for days before the first day of the month
   for (let i = 0; i < firstDayOfMonth; i++) {
     days.push(
-      <td key={`empty-${i}`} className="relative w-[14.28%] pt-[14.28%] bg-gray-50 border border-gray-200">
-        <div className="absolute inset-0 p-2"></div>
+      <td key={`empty-${i}`} className="border-b border-r border-gray-200 bg-gray-50/50">
+        <div className="min-h-[8rem]"></div>
       </td>
     );
   }
@@ -108,24 +119,36 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
     const isToday = new Date().toDateString() === currentDay.toDateString();
 
     days.push(
-      <td key={day} className="relative w-[14.28%] pt-[14.28%] border border-gray-200">
-        <div className="absolute inset-0 p-2">
-          <div className={`
-            inline-block rounded-full w-8 h-8 mb-1 flex items-center justify-center
-            ${isToday ? 'bg-blue-500 text-white' : 'text-gray-700'}
-          `}>
-            {day}
+      <td key={day} className={`relative border-b border-r border-gray-200 transition-colors duration-200 group hover:bg-gray-50/50 ${
+        isToday ? 'bg-blue-50/30' : ''
+      }`}>
+        <div className="min-h-[8rem] p-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className={`
+              flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm
+              ${isToday 
+                ? 'bg-blue-500 text-white ring-4 ring-blue-100' 
+                : 'text-gray-700 hover:bg-gray-100'
+              }
+            `}>
+              {day}
+            </div>
+            {dayContent.length > 0 && (
+              <span className="text-xs font-medium text-gray-500">
+                {dayContent.length} {dayContent.length === 1 ? 'item' : 'items'}
+              </span>
+            )}
           </div>
-          <div className="space-y-1 overflow-y-auto max-h-24">
+          <div className="space-y-1.5 overflow-y-auto max-h-[6rem]">
             {dayContent.map((content) => (
               <button
                 key={content.id}
                 onClick={() => setSelectedContent(content)}
-                className="w-full text-left p-1.5 text-xs bg-blue-50 border border-blue-100 rounded hover:bg-blue-100 transition-colors"
+                className={`w-full text-left px-2.5 py-1.5 text-xs border rounded-lg transition-all duration-200 group/item ${getContentColor(content.contentType)}`}
                 title={content.title}
               >
-                <div className="font-medium truncate">{content.title}</div>
-                <div className="text-xs text-gray-500 truncate">{content.contentType}</div>
+                <div className="font-medium truncate group-hover/item:text-opacity-100">{content.title}</div>
+                <div className="text-[10px] opacity-75">{content.contentType}</div>
               </button>
             ))}
           </div>
@@ -134,7 +157,7 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
     );
 
     if (days.length === 7) {
-      weeks.push(<tr key={day} className="h-32">{days}</tr>);
+      weeks.push(<tr key={day}>{days}</tr>);
       days = [];
     }
 
@@ -145,66 +168,86 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
   if (days.length > 0) {
     while (days.length < 7) {
       days.push(
-        <td key={`empty-end-${days.length}`} className="relative w-[14.28%] pt-[14.28%] bg-gray-50 border border-gray-200">
-          <div className="absolute inset-0 p-2"></div>
+        <td key={`empty-end-${days.length}`} className="border-b border-r border-gray-200 bg-gray-50/50">
+          <div className="min-h-[8rem]"></div>
         </td>
       );
     }
-    weeks.push(<tr key={day} className="h-32">{days}</tr>);
+    weeks.push(<tr key={day}>{days}</tr>);
   }
 
   return (
-    <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900">{monthYear}</h2>
-        <div className="space-x-2">
-          <button
-            onClick={() => {
-              const newDate = new Date(currentDate);
-              newDate.setMonth(newDate.getMonth() - 1);
-              onDateChange(newDate);
-            }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => {
-              const newDate = new Date(currentDate);
-              newDate.setMonth(newDate.getMonth() + 1);
-              onDateChange(newDate);
-            }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Next
-          </button>
+    <div className="space-y-6 bg-gradient-to-b from-white to-gray-50 rounded-2xl shadow-lg p-8 border border-gray-100">
+      <div className="flex justify-between items-center mb-8">
+        <div className="space-y-1">
+          <h2 className="text-4xl font-bold text-gray-900 tracking-tight">{monthYear}</h2>
+          <p className="text-gray-500">Plan and manage your content calendar</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex items-center p-1">
+            <button
+              onClick={() => {
+                const newDate = new Date(currentDate);
+                newDate.setMonth(newDate.getMonth() - 1);
+                onDateChange(newDate);
+              }}
+              className="p-2 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => onDateChange(new Date())}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => {
+                const newDate = new Date(currentDate);
+                newDate.setMonth(newDate.getMonth() + 1);
+                onDateChange(newDate);
+              }}
+              className="p-2 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full table-fixed">
           <thead>
-            <tr>
+            <tr className="bg-gray-50/80 border-b border-gray-200">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <th key={day} className="p-2 text-sm font-semibold text-gray-900 border-b border-gray-200 bg-gray-50">
+                <th key={day} className="py-4 px-3 text-sm font-semibold text-gray-600">
                   {day}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>{weeks}</tbody>
+          <tbody className="divide-y divide-gray-200">
+            {weeks}
+          </tbody>
         </table>
       </div>
 
       {selectedContent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">{selectedContent.title}</h3>
+        <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl transform transition-all">
+            <div className="flex justify-between items-start mb-6">
+              <div className="space-y-1 flex-1">
+                <h3 className="text-2xl font-bold text-gray-900 leading-tight">{selectedContent.title}</h3>
+                <p className="text-gray-500 text-sm">{selectedContent.date.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={regenerateContent}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                  className="text-gray-500 hover:text-gray-700 transition-colors p-2.5 hover:bg-gray-100 rounded-xl"
                   title="Regenerate content"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +256,7 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
                 </button>
                 <button
                   onClick={() => setSelectedContent(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                  className="text-gray-500 hover:text-gray-700 transition-colors p-2.5 hover:bg-gray-100 rounded-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -221,28 +264,34 @@ export function MonthView({ contentCalendar, currentDate, onDateChange }: MonthV
                 </button>
               </div>
             </div>
-            <div className="space-y-6">
-              <div>
-                <div className="font-medium text-gray-900 mb-1">Description</div>
-                <p className="text-gray-600">{selectedContent.description}</p>
+            <div className="space-y-8">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+                <div className="font-semibold text-gray-900 mb-3">Description</div>
+                <p className="text-gray-600 leading-relaxed">{selectedContent.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <div className="font-medium text-gray-900 mb-1">Content Type</div>
-                  <p className="text-gray-600">{selectedContent.contentType}</p>
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 space-y-2">
+                  <div className="font-semibold text-gray-900">Content Type</div>
+                  <p className={`text-sm px-3 py-1.5 rounded-lg inline-block ${getContentColor(selectedContent.contentType)}`}>
+                    {selectedContent.contentType}
+                  </p>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900 mb-1">Target Audience</div>
-                  <p className="text-gray-600">{selectedContent.audience}</p>
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 space-y-2">
+                  <div className="font-semibold text-gray-900">Target Audience</div>
+                  <p className="text-sm bg-purple-50 border border-purple-200 text-purple-700 px-3 py-1.5 rounded-lg inline-block">
+                    {selectedContent.audience}
+                  </p>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900 mb-1">Focus</div>
-                  <p className="text-gray-600">{selectedContent.focus}</p>
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 space-y-2">
+                  <div className="font-semibold text-gray-900">Focus</div>
+                  <p className="text-sm bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 rounded-lg inline-block">
+                    {selectedContent.focus}
+                  </p>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900 mb-1">Date</div>
-                  <p className="text-gray-600">
-                    {selectedContent.date.toLocaleDateString()}
+                <div className="bg-white p-4 rounded-2xl border border-gray-200 space-y-2">
+                  <div className="font-semibold text-gray-900">Status</div>
+                  <p className="text-sm bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg inline-block">
+                    Scheduled
                   </p>
                 </div>
               </div>

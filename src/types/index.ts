@@ -13,6 +13,13 @@ export interface AnalysisResult {
     title: string;
     wordCount: number;
   };
+  analytics: {
+    views: number;
+    engagementRate: number;
+    avgFinishTime: number;
+    avgAttentionSpan: number;
+    attentionTimeMinutes: number;
+  };
   analysis: {
     summary: {
       overview: string;
@@ -56,4 +63,55 @@ export interface ContentItem {
   date: Date;
   audience: string;
   focus: string;
-} 
+}
+
+export type OverallStrategy = {
+  contentAudit: {
+    contentTypes: Array<{
+      type: string;
+      frequency: string;
+      effectiveness: string;
+    }>;
+    writingStyles: Array<{
+      style: string;
+      usage: string;
+      impact: string;
+    }>;
+  };
+  audienceAnalysis: {
+    primaryAudiences: string[];
+    audienceNeeds: string[];
+    engagementPatterns: string;
+  };
+  contentGaps: Array<{
+    topic: string;
+    opportunity: string;
+    priority: string;
+  }>;
+  recommendations: {
+    contentMix: string;
+    topicClusters: string[];
+    contentCalendar: Array<{
+      contentType: string;
+      frequency: string;
+      focus: string;
+    }>;
+  };
+  brandVoice: {
+    currentTone: string;
+    consistencyScore: string;
+    improvements: string[];
+  };
+  actionPlan: Array<{
+    action: string;
+    timeline: string;
+    expectedImpact: string;
+  }>;
+  metrics?: {
+    views: number;
+    engagementRate: number;
+    avgFinishTime: number;
+    avgAttentionSpan: number;
+    attentionTime: number;
+  };
+}; 

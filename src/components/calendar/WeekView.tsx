@@ -128,7 +128,7 @@ export function WeekView({ contentCalendar, currentDate, onDateChange }: WeekVie
 
       {selectedContent && (
         <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl transform transition-all">
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl transform transition-all overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-start mb-6">
               <div className="space-y-1 flex-1">
                 <h3 className="text-2xl font-bold text-gray-900 leading-tight">{selectedContent.title}</h3>
@@ -150,6 +150,7 @@ export function WeekView({ contentCalendar, currentDate, onDateChange }: WeekVie
                 <div className="font-semibold text-gray-900 mb-3">Description</div>
                 <p className="text-gray-600 leading-relaxed">{selectedContent.description}</p>
               </div>
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-white p-4 rounded-2xl border border-gray-200 space-y-2">
                   <div className="font-semibold text-gray-900">Content Type</div>
@@ -174,6 +175,40 @@ export function WeekView({ contentCalendar, currentDate, onDateChange }: WeekVie
                   <p className="text-sm bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg inline-block">
                     Scheduled
                   </p>
+                </div>
+              </div>
+
+              {/* AI Insights Section - Moved to bottom */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-blue-800 text-lg">AI Content Strategy Insights</div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">Why this audience?</h4>
+                    <p className="text-blue-800 text-sm bg-blue-100/50 p-3 rounded-lg">{selectedContent.aiInsights.audienceReason}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">Why this content type?</h4>
+                    <p className="text-blue-800 text-sm bg-blue-100/50 p-3 rounded-lg">{selectedContent.aiInsights.contentTypeReason}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">Why this timing?</h4>
+                    <p className="text-blue-800 text-sm bg-blue-100/50 p-3 rounded-lg">{selectedContent.aiInsights.timingReason}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">Strategic value</h4>
+                    <p className="text-blue-800 text-sm bg-blue-100/50 p-3 rounded-lg">{selectedContent.aiInsights.strategicValue}</p>
+                  </div>
                 </div>
               </div>
             </div>

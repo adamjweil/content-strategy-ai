@@ -63,6 +63,12 @@ export interface ContentItem {
   date: Date;
   audience: string;
   focus: string;
+  aiInsights: {
+    audienceReason: string;
+    contentTypeReason: string;
+    timingReason: string;
+    strategicValue: string;
+  };
 }
 
 export type OverallStrategy = {

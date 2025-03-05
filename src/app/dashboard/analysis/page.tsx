@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase/config';
-import { doc, getDoc, collection, query, where, getDocs, addDoc, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, addDoc, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ResultCard } from '@/components/ResultCard';
 import { OverallStrategyCard } from '@/components/OverallStrategyCard';
 import { PrintableResultCard } from '@/components/PrintableResultCard';
@@ -509,6 +509,7 @@ export default function AnalysisPage() {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [view, setView] = useState<'individual' | 'overall'>('overall');
   const [showPDF, setShowPDF] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch all analyses for the user
   useEffect(() => {
@@ -638,6 +639,8 @@ export default function AnalysisPage() {
     if (!user) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
       const urlIds = results.map(result => {
         const url = new URL(result.url);
@@ -650,22 +653,37 @@ export default function AnalysisPage() {
         body: JSON.stringify({ urls: results.map(r => r.url) }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze content');
+      }
+
       const data = await response.json();
       
-      // Save new analysis to Firestore
-      await addDoc(collection(db, 'analyses'), {
-        userId: user.uid,
-        urlIds: urlIds.sort(),
-        urls: results.map(r => r.url),
-        results: data.results,
-        overallStrategy: data.overallStrategy,
-        createdAt: new Date().toISOString()
-      });
+      if (data.failedResults?.length > 0) {
+        console.warn('Some analyses failed:', data.failedResults);
+      }
 
-      setResults(data.results);
-      setOverallStrategy(data.overallStrategy);
+      // Update the UI with successful results
+      if (data.results) {
+        setResults(data.results);
+        setOverallStrategy(data.overallStrategy);
+        setActiveResultIndex(0);
+        
+        // Save the analysis to Firestore
+        const analysisRef = await addDoc(collection(db, 'analyses'), {
+          userId: user.uid,
+          results: data.results,
+          overallStrategy: data.overallStrategy,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+
+        setSelectedAnalysisId(analysisRef.id);
+      }
     } catch (error) {
-      console.error('Error analyzing content:', error);
+      console.error('Analysis error:', error);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
@@ -724,7 +742,7 @@ export default function AnalysisPage() {
               >
                 {allAnalyses.map((analysis) => (
                   <option key={analysis.id} value={analysis.id}>
-                    {new Date(analysis.createdAt).toLocaleDateString()} - {analysis.urls.length} URLs
+                    {new Date(analysis.createdAt).toLocaleDateString()} - {analysis.urls?.length || 0} URLs
                   </option>
                 ))}
               </select>
@@ -737,7 +755,7 @@ export default function AnalysisPage() {
                 Refresh Analysis
               </button>
 
-              {(overallStrategy || results[activeResultIndex]) && (
+              {(overallStrategy || (results && results[activeResultIndex])) && (
                 <button
                   onClick={() => setShowPDF(true)}
                   className="px-4 py-2 text-green-500 border border-green-500 rounded-lg hover:bg-green-50 flex items-center gap-2"
@@ -756,7 +774,7 @@ export default function AnalysisPage() {
               <PDFButton
                 view={view}
                 overallStrategy={overallStrategy}
-                result={results[activeResultIndex]}
+                result={results?.[activeResultIndex]}
                 onClose={() => setShowPDF(false)}
               />
             </Suspense>
@@ -765,7 +783,7 @@ export default function AnalysisPage() {
           <div id="export-content">
             {view === 'individual' ? (
               <>
-                {results.length > 1 && (
+                {results && results.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-2">
                     {results.map((result, index) => (
                       <button
@@ -779,19 +797,33 @@ export default function AnalysisPage() {
                             ? 'bg-blue-500 text-white'
                             : 'bg-gray-100 hover:bg-gray-200'
                         }`}
-                        title={result.content.title}
+                        title={result.content?.title}
                       >
-                        {result.content.title.length > 25 
-                          ? `${result.content.title.substring(0, 25)}...`
-                          : result.content.title}
+                        {result.content?.title 
+                          ? (result.content.title.length > 25 
+                              ? `${result.content.title.substring(0, 25)}...`
+                              : result.content.title)
+                          : 'Untitled'}
                       </button>
                     ))}
                   </div>
                 )}
-                <ResultCard result={results[activeResultIndex]} />
+                {results && results[activeResultIndex] ? (
+                  <ResultCard result={results[activeResultIndex]} />
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No analysis result available for this selection.</p>
+                  </div>
+                )}
               </>
             ) : (
-              overallStrategy && <OverallStrategyCard strategy={overallStrategy} />
+              overallStrategy ? (
+                <OverallStrategyCard strategy={overallStrategy} />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No overall strategy available.</p>
+                </div>
+              )
             )}
           </div>
         </>

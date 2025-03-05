@@ -7,10 +7,95 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from '
 import type { Analysis, ContentItem } from '@/types';
 import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
+import { ContentPreferences } from '@/components/calendar/ContentPreferences';
 
 interface CalendarItem extends ContentItem {
   date: Date;
 }
+
+// Add helper functions for content generation
+const generateContentIdea = (
+  type: string,
+  focus: string,
+  audience: string,
+  contentGaps: Array<{ topic: string, opportunity: string }>,
+  writingStyles: Array<{ style: string, impact: string }>,
+  audienceNeeds: string[]
+): { title: string, description: string } => {
+  // Find relevant content gap
+  const relevantGap = contentGaps.find(gap => 
+    gap.topic.toLowerCase().includes(focus.toLowerCase()) ||
+    focus.toLowerCase().includes(gap.topic.toLowerCase())
+  );
+
+  // Find most effective writing style
+  const effectiveStyle = writingStyles.find(style => style.impact.toLowerCase().includes('high'));
+
+  // Find relevant audience need
+  const relevantNeed = audienceNeeds.find(need =>
+    need.toLowerCase().includes(focus.toLowerCase()) ||
+    focus.toLowerCase().includes(need.toLowerCase())
+  );
+
+  const titleTemplates = {
+    'blog-post': [
+      `${relevantGap ? `[${relevantGap.opportunity}] ` : ''}The Strategic Guide to ${focus} for ${audience}`,
+      `${effectiveStyle ? `[${effectiveStyle.style}] ` : ''}How ${audience} Can Transform Their ${focus} Strategy`,
+      `${relevantNeed ? `[${relevantNeed}] ` : ''}Essential ${focus} Framework for ${audience}`,
+    ],
+    'social-media': [
+      `📊 New Data: ${focus} Trends Reshaping ${audience}'s Strategy`,
+      `💡 ${relevantGap ? relevantGap.opportunity : `Innovative ${focus} Approaches`} for ${audience}`,
+      `🎯 ${relevantNeed ? `Solving ${relevantNeed}` : `Mastering ${focus}`} - Tips for ${audience}`,
+    ],
+    'newsletter': [
+      `${focus} Intelligence: ${relevantGap ? relevantGap.opportunity : 'Strategic Insights'} for ${audience}`,
+      `${focus} Insider: ${relevantNeed ? `Addressing ${relevantNeed}` : 'Key Developments'} for ${audience}`,
+      `${focus} Strategy Brief: ${effectiveStyle ? `${effectiveStyle.style} Approaches` : 'Expert Analysis'} for ${audience}`,
+    ],
+    'video': [
+      `[Video] ${relevantGap ? relevantGap.opportunity : focus} Masterclass for ${audience}`,
+      `[Expert Analysis] ${focus} Strategy Deep-Dive: ${relevantNeed ? `Solving ${relevantNeed}` : 'Best Practices'}`,
+      `[Strategy Session] ${effectiveStyle ? `${effectiveStyle.style} Approach to` : 'Mastering'} ${focus}`,
+    ],
+    'infographic': [
+      `[Data Visualization] ${focus} Landscape for ${audience}: ${relevantGap ? relevantGap.opportunity : 'Strategic Overview'}`,
+      `[Visual Guide] ${relevantNeed ? `Addressing ${relevantNeed} in` : 'Mapping'} ${focus} Strategy`,
+      `[Framework] ${effectiveStyle ? `${effectiveStyle.style} Method for` : 'Strategic Approach to'} ${focus}`,
+    ]
+  };
+
+  const descriptionTemplates = {
+    'blog-post': [
+      `In-depth analysis of ${focus} tailored for ${audience}, addressing ${relevantGap ? relevantGap.opportunity : 'key challenges'}. ${effectiveStyle ? `Written in a ${effectiveStyle.style} style` : ''} to maximize impact and actionability.`,
+      `Strategic guide helping ${audience} master ${focus}, with emphasis on ${relevantNeed ? relevantNeed : 'core competencies'}. Includes practical frameworks and expert insights.`,
+    ],
+    'social-media': [
+      `Quick, actionable insights on ${focus} for busy ${audience}. Focused on ${relevantGap ? relevantGap.opportunity : 'key opportunities'} with immediate application.`,
+      `Engaging social content that breaks down ${focus} concepts for ${audience}, emphasizing ${relevantNeed ? relevantNeed : 'practical implementation'}.`,
+    ],
+    'newsletter': [
+      `Curated ${focus} insights for ${audience}, highlighting ${relevantGap ? relevantGap.opportunity : 'emerging opportunities'}. ${effectiveStyle ? `Presented in a ${effectiveStyle.style} format` : ''} for maximum retention.`,
+      `Strategic ${focus} updates tailored for ${audience}, focusing on ${relevantNeed ? relevantNeed : 'industry developments'} and actionable takeaways.`,
+    ],
+    'video': [
+      `Visual deep-dive into ${focus} for ${audience}, exploring ${relevantGap ? relevantGap.opportunity : 'key strategies'}. ${effectiveStyle ? `Utilizing ${effectiveStyle.style} presentation style` : ''} for enhanced learning.`,
+      `Expert-led video content breaking down ${focus} concepts for ${audience}, with emphasis on ${relevantNeed ? relevantNeed : 'practical application'}.`,
+    ],
+    'infographic': [
+      `Data-driven visualization of ${focus} landscape for ${audience}, highlighting ${relevantGap ? relevantGap.opportunity : 'key metrics'} and strategic opportunities.`,
+      `Visual framework mapping ${focus} strategy for ${audience}, emphasizing ${relevantNeed ? relevantNeed : 'critical success factors'} and implementation paths.`,
+    ]
+  };
+
+  const typeTemplates = titleTemplates[type as keyof typeof titleTemplates] || titleTemplates['blog-post'];
+  const typeDescTemplates = descriptionTemplates[type as keyof typeof descriptionTemplates] || descriptionTemplates['blog-post'];
+
+  return {
+    title: typeTemplates[Math.floor(Math.random() * typeTemplates.length)],
+    description: typeDescTemplates[Math.floor(Math.random() * typeDescTemplates.length)]
+  };
+};
 
 export default function CalendarPage() {
   const { user } = useAuth();
@@ -18,6 +103,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [contentCalendar, setContentCalendar] = useState<CalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contentPreferences, setContentPreferences] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -48,170 +134,141 @@ export default function CalendarPage() {
     fetchLatestAnalysis();
   }, [user]);
 
-  const generateContentCalendar = (analysis: Analysis): CalendarItem[] => {
-    if (!analysis.overallStrategy) return [];
+  const handlePreferencesChange = (newPreferences: { [key: string]: number }) => {
+    setContentPreferences(newPreferences);
+    if (user) {
+      // Update the content calendar based on new preferences
+      const analysesQuery = query(
+        collection(db, 'analyses'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
 
-    const { contentMix, topicClusters, contentCalendar } = analysis.overallStrategy.recommendations;
-    const { primaryAudiences, audienceNeeds, engagementPatterns } = analysis.overallStrategy.audienceAnalysis;
-    
-    // Generate 4 weeks of content based on strategy
-    const calendar: CalendarItem[] = [];
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    for (let week = 0; week < 4; week++) {
-      contentCalendar.forEach((item: { contentType: string; frequency: string; focus: string }) => {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + (week * 7) + Math.floor(Math.random() * 7)); // Spread content throughout the week
-
-        // Generate title and description based on strategy
-        const topic = topicClusters[Math.floor(Math.random() * topicClusters.length)];
-        const audience = primaryAudiences[Math.floor(Math.random() * primaryAudiences.length)];
-        const need = audienceNeeds[Math.floor(Math.random() * audienceNeeds.length)];
-
-        // Generate AI insights about why this content is recommended
-        const aiInsights = generateAIInsights({
-          topic,
-          audience,
-          need,
-          contentType: item.contentType,
-          focus: item.focus,
-          date,
-          engagementPatterns
-        });
-
-        calendar.push({
-          id: `${week}-${item.contentType}-${Date.now()}`,
-          title: generateTitle(topic, item.contentType, audience),
-          description: generateDescription(topic, need, item.focus),
-          contentType: item.contentType,
-          date: date,
-          audience: audience,
-          focus: item.focus,
-          aiInsights
-        });
+      getDocs(analysesQuery).then((snapshot) => {
+        if (!snapshot.empty) {
+          const analysis = snapshot.docs[0].data() as Analysis;
+          const calendar = generateContentCalendar(analysis, newPreferences);
+          setContentCalendar(calendar);
+        }
       });
     }
-
-    return calendar;
   };
 
-  const generateTitle = (topic: string, contentType: string, audience: string): string => {
-    const titleTemplates = [
-      `The Ultimate Guide to ${topic} for ${audience}`,
-      `How ${audience} Can Master ${topic}`,
-      `${topic}: A Complete ${contentType} Guide`,
-      `${topic} Strategies That Work for ${audience}`,
-      `Why ${audience} Should Care About ${topic}`,
-    ];
-    return titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
-  };
+  const generateContentCalendar = (analysis: Analysis, preferences: { [key: string]: number } = contentPreferences) => {
+    const calendar: CalendarItem[] = [];
+    const startDate = new Date();
+    startDate.setDate(1);
+    
+    const totalMonthlyContent = Object.values(preferences).reduce((sum, freq) => sum + freq, 0) || 28;
+    
+    const dates = Array.from({ length: totalMonthlyContent }, (_, i) => {
+      const date = new Date(startDate);
+      date.setDate(Math.floor((i / totalMonthlyContent) * 28) + 1);
+      return date;
+    });
 
-  const generateDescription = (topic: string, need: string, focus: string): string => {
-    return `A comprehensive ${focus} that addresses ${need} by exploring ${topic}. This content piece will provide valuable insights and actionable strategies for our audience.`;
-  };
-
-  // New function to generate AI insights
-  const generateAIInsights = (params: {
-    topic: string;
-    audience: string;
-    need: string;
-    contentType: string;
-    focus: string;
-    date: Date;
-    engagementPatterns: string;
-  }) => {
-    const { topic, audience, need, contentType, focus, date, engagementPatterns } = params;
-    
-    // Generate audience reason
-    const audienceReasons = [
-      `${audience} have shown high engagement with ${topic} content based on historical data.`,
-      `${audience} are actively searching for solutions related to ${topic}.`,
-      `Our analysis shows ${audience} are underserved with quality content about ${topic}.`,
-      `${audience} have expressed specific interest in ${topic} through engagement patterns.`,
-      `This demographic is at a key decision point for ${topic} solutions.`
-    ];
-    
-    // Generate content type reason
-    const contentTypeReasons = [
-      `${contentType}s perform particularly well for ${topic} topics based on our analysis.`,
-      `${contentType}s are ideal for delivering complex information about ${topic} in an accessible format.`,
-      `Engagement metrics show ${audience} prefer consuming ${topic} content as ${contentType}s.`,
-      `${contentType}s have higher conversion rates for ${topic}-related offerings.`,
-      `The ${contentType} format aligns with the depth needed to properly address ${topic}.`
-    ];
-    
-    // Generate timing reason based on day of week
-    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const timingReasons = [
-      `${dayOfWeek}s show higher engagement rates for ${contentType} content.`,
-      `Publishing on ${dayOfWeek} aligns with ${audience}'s typical consumption patterns.`,
-      `Our data indicates ${dayOfWeek} is optimal for ${contentType} visibility.`,
-      `${audience} are most active on ${dayOfWeek}s, based on ${engagementPatterns}.`,
-      `Content published on ${dayOfWeek}s receives more shares and engagement.`
-    ];
-    
-    // Generate strategic value explanation
-    const strategicValues = [
-      `This content fills a critical gap in our ${topic} narrative and builds toward thought leadership.`,
-      `Addresses a key pain point (${need}) while positioning our expertise in ${topic}.`,
-      `Part of a strategic content cluster focused on ${topic} that will improve SEO performance.`,
-      `Supports our business goals by addressing ${audience}'s needs around ${topic}.`,
-      `Creates a foundation for future ${focus} content by establishing key concepts about ${topic}.`
-    ];
-    
-    return {
-      audienceReason: audienceReasons[Math.floor(Math.random() * audienceReasons.length)],
-      contentTypeReason: contentTypeReasons[Math.floor(Math.random() * contentTypeReasons.length)],
-      timingReason: timingReasons[Math.floor(Math.random() * timingReasons.length)],
-      strategicValue: strategicValues[Math.floor(Math.random() * strategicValues.length)]
+    const contentTypes = Object.entries(preferences).length > 0 ? preferences : {
+      'blog-post': 4,
+      'social-media': 16,
+      'newsletter': 4,
+      'video': 2,
+      'infographic': 2
     };
+
+    // Extract strategy data from analysis
+    const strategy = analysis.overallStrategy || {};
+    const contentGaps = strategy.contentGaps || [];
+    const writingStyles = strategy.contentAudit?.writingStyles || [];
+    const audienceNeeds = strategy.audienceAnalysis?.audienceNeeds || [];
+    const topics = strategy.recommendations?.topicClusters || ['Content Strategy', 'Digital Marketing', 'Industry Trends'];
+    const audiences = strategy.audienceAnalysis?.primaryAudiences || ['Marketing Professionals', 'Business Leaders'];
+
+    let dateIndex = 0;
+    for (const [type, frequency] of Object.entries(contentTypes)) {
+      for (let i = 0; i < frequency; i++) {
+        if (dateIndex < dates.length) {
+          // Rotate through topics and audiences for variety
+          const focus = topics[i % topics.length];
+          const audience = audiences[i % audiences.length];
+          
+          const contentIdea = generateContentIdea(
+            type,
+            focus,
+            audience,
+            contentGaps,
+            writingStyles,
+            audienceNeeds
+          );
+          
+          const contentItem: CalendarItem = {
+            id: `${type}-${i}`,
+            ...contentIdea,
+            contentType: type,
+            date: dates[dateIndex],
+            audience: audience,
+            focus: focus,
+            aiInsights: {
+              audienceReason: `${audience} have shown high engagement with ${focus}-related content, particularly addressing ${audienceNeeds[i % audienceNeeds.length] || 'key industry challenges'}`,
+              contentTypeReason: `${type} format is optimal for delivering ${focus} insights to ${audience}, aligned with their consumption preferences`,
+              timingReason: `Publishing on ${dates[dateIndex].toLocaleDateString('en-US', { weekday: 'long' })}s shows higher engagement for ${audience} consuming ${type} content`,
+              strategicValue: `This content addresses ${contentGaps[i % contentGaps.length]?.opportunity || `key opportunities in ${focus}`} while leveraging ${writingStyles[i % writingStyles.length]?.style || 'effective content delivery'} methods`
+            }
+          };
+          calendar.push(contentItem);
+          dateIndex++;
+        }
+      }
+    }
+
+    return calendar.sort((a, b) => a.date.getTime() - b.date.getTime());
   };
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
+      <ContentPreferences onPreferencesChange={handlePreferencesChange} />
+      
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Content Calendar</h1>
-        <div className="flex gap-4">
+        <div className="space-x-2">
           <button
             onClick={() => setView('month')}
-            className={`px-4 py-2 rounded ${
-              view === 'month' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            className={`px-4 py-2 rounded-lg ${
+              view === 'month'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Month View
+            Month
           </button>
           <button
             onClick={() => setView('week')}
-            className={`px-4 py-2 rounded ${
-              view === 'week' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            className={`px-4 py-2 rounded-lg ${
+              view === 'week'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Week View
+            Week
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
+      ) : view === 'month' ? (
+        <MonthView
+          contentCalendar={contentCalendar}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+        />
       ) : (
-        <>
-          {view === 'month' ? (
-            <MonthView 
-              contentCalendar={contentCalendar}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-            />
-          ) : (
-            <WeekView
-              contentCalendar={contentCalendar}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-            />
-          )}
-        </>
+        <WeekView
+          contentCalendar={contentCalendar}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+        />
       )}
     </div>
   );

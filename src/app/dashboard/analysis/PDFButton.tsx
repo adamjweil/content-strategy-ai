@@ -7,84 +7,196 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#ffffff',
-    padding: 20,
+    padding: 30,
   },
   header: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 12,
+    color: '#111827',
+    marginBottom: 16,
   },
   subheader: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 8,
+    color: '#1F2937',
+    marginTop: 8,
+    marginBottom: 6,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 6,
+    color: '#374151',
+    marginTop: 6,
+    marginBottom: 4,
   },
   text: {
     fontSize: 10,
-    marginBottom: 8,
-  },
-  listItem: {
-    fontSize: 10,
-    marginBottom: 4,
-    paddingLeft: 10,
+    marginBottom: 3,
+    color: '#4B5563',
+    lineHeight: 1.3,
   },
   metricRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 16,
+    gap: 12,
   },
   metricBox: {
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 5,
+    padding: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
     flex: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
   },
   metricLabel: {
-    fontSize: 8,
-    color: '#6b7280',
+    fontSize: 10,
+    color: '#6B7280',
+    marginBottom: 2,
   },
   metricValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 4,
+    color: '#111827',
   },
   contentContainer: {
-    marginBottom: 15,
+    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
   },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 6,
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 8,
+    gap: 4,
   },
   tag: {
-    fontSize: 8,
-    backgroundColor: '#e5e7eb',
-    paddingVertical: 3,
+    fontSize: 9,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 2,
     paddingHorizontal: 6,
-    marginRight: 5,
-    marginBottom: 5,
-    borderRadius: 3,
-  },
-  divider: {
-    borderBottom: 1,
-    borderBottomColor: '#e5e7eb',
-    marginVertical: 10,
+    borderRadius: 4,
+    color: '#374151',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
   },
   cardContainer: {
-    marginTop: 6,
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 6,
     padding: 8,
-    backgroundColor: '#f9fafb',
-    borderRadius: 5,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
   },
+  metricsContainer: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderStyle: 'solid',
+  },
+  contentAuditContainer: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    borderStyle: 'solid',
+  },
+  gapsContainer: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    borderStyle: 'solid',
+  },
+  recommendationsContainer: {
+    backgroundColor: '#FDF2F8',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+    borderStyle: 'solid',
+  },
+  actionContainer: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderStyle: 'solid',
+  },
+  seoContainer: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderStyle: 'solid',
+  },
+  strategyContainer: {
+    backgroundColor: '#FDF2F8',
+    borderRadius: 6,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+    borderStyle: 'solid',
+  },
+  scoreBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    padding: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'solid',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  scoreLabel: {
+    fontSize: 10,
+    color: '#374151',
+    flex: 1,
+  },
+  scoreValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  twoColumnLayout: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  column: {
+    flex: 1,
+  },
+  bulletList: {
+    marginLeft: 12,
+  },
+  bullet: {
+    fontSize: 10,
+    marginBottom: 3,
+    color: '#4B5563',
+  }
 });
 
 // Enhanced PDF Document for Overall Strategy
@@ -94,124 +206,79 @@ const PDFDocument = ({ strategy }: { strategy: OverallStrategy }) => (
       <Text style={styles.header}>Overall Content Strategy</Text>
       
       {strategy.metrics && (
-        <View style={styles.contentContainer}>
-          <Text style={styles.subheader}>Performance Metrics</Text>
+        <View style={styles.metricsContainer}>
           <View style={styles.metricRow}>
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Views</Text>
               <Text style={styles.metricValue}>{strategy.metrics.views.toLocaleString()}</Text>
             </View>
             <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Engagement Rate</Text>
+              <Text style={styles.metricLabel}>Engagement</Text>
               <Text style={styles.metricValue}>{strategy.metrics.engagementRate}%</Text>
             </View>
             <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Avg. Finish Time</Text>
-              <Text style={styles.metricValue}>{strategy.metrics.avgFinishTime} min</Text>
+              <Text style={styles.metricLabel}>Finish Time</Text>
+              <Text style={styles.metricValue}>{strategy.metrics.avgFinishTime}m</Text>
+            </View>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricLabel}>Attention</Text>
+              <Text style={styles.metricValue}>{strategy.metrics.attentionTime}m</Text>
             </View>
           </View>
         </View>
       )}
 
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Content Audit</Text>
-        <Text style={styles.sectionTitle}>Content Types</Text>
-        {strategy.contentAudit.contentTypes.map((item, index) => (
-          <View key={index} style={styles.cardContainer}>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>{item.type}: </Text>
-              {item.frequency} frequency, {item.effectiveness} effectiveness
-            </Text>
+      <View style={styles.twoColumnLayout}>
+        <View style={styles.column}>
+          <View style={styles.contentAuditContainer}>
+            <Text style={styles.subheader}>Content Audit & Audience</Text>
+            <Text style={styles.sectionTitle}>Content Types</Text>
+            {strategy.contentAudit.contentTypes.map((item, index) => (
+              <View key={index} style={styles.cardContainer}>
+                <Text style={[styles.text, { fontWeight: 'bold' }]}>{item.type}</Text>
+                <Text style={styles.text}>{item.frequency} • {item.effectiveness}</Text>
+              </View>
+            ))}
+            <Text style={styles.sectionTitle}>Primary Audiences</Text>
+            <View style={styles.tagContainer}>
+              {strategy.audienceAnalysis.primaryAudiences.map((audience, index) => (
+                <Text key={index} style={styles.tag}>{audience}</Text>
+              ))}
+            </View>
           </View>
-        ))}
 
-        <Text style={styles.sectionTitle}>Writing Styles</Text>
-        {strategy.contentAudit.writingStyles.map((item, index) => (
-          <View key={index} style={styles.cardContainer}>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>{item.style}: </Text>
-              {item.usage} usage, {item.impact} impact
-            </Text>
+          <View style={styles.gapsContainer}>
+            <Text style={styles.subheader}>Content Gaps</Text>
+            {strategy.contentGaps.map((gap, index) => (
+              <View key={index} style={styles.cardContainer}>
+                <Text style={[styles.text, { fontWeight: 'bold' }]}>{gap.topic}</Text>
+                <Text style={styles.text}>{gap.priority} • {gap.opportunity}</Text>
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Audience Analysis</Text>
-        <Text style={styles.sectionTitle}>Primary Audiences</Text>
-        <View style={styles.tagContainer}>
-          {strategy.audienceAnalysis.primaryAudiences.map((audience, index) => (
-            <Text key={index} style={styles.tag}>{audience}</Text>
-          ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Audience Needs</Text>
-        <View style={styles.tagContainer}>
-          {strategy.audienceAnalysis.audienceNeeds.map((need, index) => (
-            <Text key={index} style={styles.tag}>{need}</Text>
-          ))}
+        <View style={styles.column}>
+          <View style={styles.recommendationsContainer}>
+            <Text style={styles.subheader}>Recommendations</Text>
+            <Text style={styles.text}>{strategy.recommendations.contentMix}</Text>
+            <View style={styles.tagContainer}>
+              {strategy.recommendations.topicClusters.map((topic, index) => (
+                <Text key={index} style={styles.tag}>{topic}</Text>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.actionContainer}>
+            <Text style={styles.subheader}>Action Plan</Text>
+            {strategy.actionPlan.map((action, index) => (
+              <View key={index} style={styles.cardContainer}>
+                <Text style={[styles.text, { fontWeight: 'bold' }]}>{action.action}</Text>
+                <Text style={styles.text}>{action.timeline} • {action.expectedImpact}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-
-        <Text style={styles.sectionTitle}>Engagement Patterns</Text>
-        <Text style={styles.text}>{strategy.audienceAnalysis.engagementPatterns}</Text>
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Content Gaps</Text>
-        {strategy.contentGaps.map((gap, index) => (
-          <View key={index} style={styles.cardContainer}>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>{gap.topic}</Text>
-            </Text>
-            <Text style={styles.text}>Opportunity: {gap.opportunity}</Text>
-            <Text style={styles.text}>Priority: {gap.priority}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Recommendations</Text>
-        <Text style={styles.sectionTitle}>Content Mix</Text>
-        <Text style={styles.text}>{strategy.recommendations.contentMix}</Text>
-
-        <Text style={styles.sectionTitle}>Topic Clusters</Text>
-        <View style={styles.tagContainer}>
-          {strategy.recommendations.topicClusters.map((topic, index) => (
-            <Text key={index} style={styles.tag}>{topic}</Text>
-          ))}
-        </View>
-
-        <Text style={styles.sectionTitle}>Content Calendar</Text>
-        {strategy.recommendations.contentCalendar.map((item, index) => (
-          <View key={index} style={styles.cardContainer}>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>{item.contentType}</Text>
-            </Text>
-            <Text style={styles.text}>Frequency: {item.frequency}</Text>
-            <Text style={styles.text}>Focus: {item.focus}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Action Plan</Text>
-        {strategy.actionPlan.map((action, index) => (
-          <View key={index} style={styles.cardContainer}>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>{action.action}</Text>
-            </Text>
-            <Text style={styles.text}>Timeline: {action.timeline}</Text>
-            <Text style={styles.text}>Expected Impact: {action.expectedImpact}</Text>
-          </View>
-        ))}
       </View>
     </Page>
   </Document>
@@ -223,11 +290,10 @@ const IndividualPDFDocument = ({ result }: { result: AnalysisResult }) => (
     <Page size="A4" style={styles.page}>
       <Text style={styles.header}>{result.content.title}</Text>
       
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Content Overview</Text>
+      <View style={styles.metricsContainer}>
         <View style={styles.metricRow}>
           <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Word Count</Text>
+            <Text style={styles.metricLabel}>Words</Text>
             <Text style={styles.metricValue}>{result.content.wordCount}</Text>
           </View>
           <View style={styles.metricBox}>
@@ -235,83 +301,80 @@ const IndividualPDFDocument = ({ result }: { result: AnalysisResult }) => (
             <Text style={styles.metricValue}>{result.analytics.views}</Text>
           </View>
           <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Engagement Rate</Text>
+            <Text style={styles.metricLabel}>Engagement</Text>
             <Text style={styles.metricValue}>{result.analytics.engagementRate}%</Text>
           </View>
-        </View>
-        <View style={styles.metricRow}>
           <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Avg. Finish Time</Text>
-            <Text style={styles.metricValue}>{result.analytics.avgFinishTime} min</Text>
-          </View>
-          <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Avg. Attention Span</Text>
-            <Text style={styles.metricValue}>{result.analytics.avgAttentionSpan} min</Text>
-          </View>
-          <View style={styles.metricBox}>
-            <Text style={styles.metricLabel}>Attention Time</Text>
-            <Text style={styles.metricValue}>{result.analytics.attentionTimeMinutes} min</Text>
+            <Text style={styles.metricLabel}>Attention</Text>
+            <Text style={styles.metricValue}>{result.analytics.attentionTimeMinutes}m</Text>
           </View>
         </View>
       </View>
 
-      <View style={styles.divider} />
+      <View style={styles.twoColumnLayout}>
+        <View style={styles.column}>
+          <View style={styles.contentAuditContainer}>
+            <Text style={styles.subheader}>Content Summary</Text>
+            <Text style={styles.text}>{result.analysis.summary.overview}</Text>
+            
+            <View style={styles.twoColumnLayout}>
+              <View style={styles.column}>
+                <Text style={styles.sectionTitle}>Strengths</Text>
+                {result.analysis.summary.strengths.map((strength, index) => (
+                  <Text key={index} style={styles.text}>• {strength}</Text>
+                ))}
+              </View>
+              <View style={styles.column}>
+                <Text style={styles.sectionTitle}>Weaknesses</Text>
+                {result.analysis.summary.weaknesses.map((weakness, index) => (
+                  <Text key={index} style={styles.text}>• {weakness}</Text>
+                ))}
+              </View>
+            </View>
+          </View>
 
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Content Summary</Text>
-        <Text style={styles.text}>{result.analysis.summary.overview}</Text>
-        
-        <Text style={styles.sectionTitle}>Strengths</Text>
-        {result.analysis.summary.strengths.map((strength, index) => (
-          <Text key={index} style={styles.listItem}>• {strength}</Text>
-        ))}
+          <View style={styles.seoContainer}>
+            <Text style={styles.subheader}>SEO & Quality</Text>
+            <View style={styles.twoColumnLayout}>
+              <View style={styles.column}>
+                <View style={styles.scoreBox}>
+                  <Text style={styles.scoreLabel}>SEO Score</Text>
+                  <Text style={styles.scoreValue}>{result.analysis.seoAnalysis.score}</Text>
+                </View>
+                {result.analysis.seoAnalysis.recommendations.map((rec, index) => (
+                  <Text key={index} style={styles.text}>• {rec}</Text>
+                ))}
+              </View>
+              <View style={styles.column}>
+                <View style={styles.scoreBox}>
+                  <Text style={styles.scoreLabel}>Quality Score</Text>
+                  <Text style={styles.scoreValue}>{result.analysis.contentQuality.score}</Text>
+                </View>
+                {result.analysis.contentQuality.suggestions.map((sug, index) => (
+                  <Text key={index} style={styles.text}>• {sug}</Text>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
 
-        <Text style={styles.sectionTitle}>Weaknesses</Text>
-        {result.analysis.summary.weaknesses.map((weakness, index) => (
-          <Text key={index} style={styles.listItem}>• {weakness}</Text>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>SEO Analysis</Text>
-        <Text style={styles.text}>Score: {result.analysis.seoAnalysis.score}</Text>
-        
-        <Text style={styles.sectionTitle}>Recommendations</Text>
-        {result.analysis.seoAnalysis.recommendations.map((recommendation, index) => (
-          <Text key={index} style={styles.listItem}>• {recommendation}</Text>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Content Quality</Text>
-        <Text style={styles.text}>Score: {result.analysis.contentQuality.score}</Text>
-        
-        <Text style={styles.sectionTitle}>Suggestions</Text>
-        {result.analysis.contentQuality.suggestions.map((suggestion, index) => (
-          <Text key={index} style={styles.listItem}>• {suggestion}</Text>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subheader}>Strategy</Text>
-        <Text style={styles.sectionTitle}>Target Audience</Text>
-        <Text style={styles.text}>{result.analysis.strategy.targetAudience}</Text>
-        
-        <Text style={styles.sectionTitle}>Content Gaps</Text>
-        {result.analysis.strategy.contentGaps.map((gap, index) => (
-          <Text key={index} style={styles.listItem}>• {gap}</Text>
-        ))}
-        
-        <Text style={styles.sectionTitle}>Action Items</Text>
-        {result.analysis.strategy.actionItems.map((item, index) => (
-          <Text key={index} style={styles.listItem}>• {item}</Text>
-        ))}
+        <View style={styles.column}>
+          <View style={styles.strategyContainer}>
+            <Text style={styles.subheader}>Strategy</Text>
+            <Text style={styles.sectionTitle}>Target Audience</Text>
+            <Text style={styles.text}>{result.analysis.strategy.targetAudience}</Text>
+            
+            <Text style={styles.sectionTitle}>Content Gaps</Text>
+            {result.analysis.strategy.contentGaps.map((gap, index) => (
+              <Text key={index} style={styles.text}>• {gap}</Text>
+            ))}
+            
+            <Text style={styles.sectionTitle}>Action Items</Text>
+            {result.analysis.strategy.actionItems.map((item, index) => (
+              <Text key={index} style={styles.text}>• {item}</Text>
+            ))}
+          </View>
+        </View>
       </View>
     </Page>
   </Document>

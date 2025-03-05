@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import * as cheerio from 'cheerio';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -238,159 +239,222 @@ export async function POST(request: Request) {
   try {
     const { urls } = await request.json();
 
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OpenAI API key is not configured' },
+        { status: 500 }
+      );
+    }
+
     // Process each URL
-    const individualResults = await Promise.all(urls.map(async (url: string) => {
-      try {
-        // Fetch the content from the URL
-        const response = await fetch(url);
-        const html = await response.text();
-
-        // Extract text content (basic example - you might want to use a proper HTML parser)
-        const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-
-        // Use OpenAI to analyze the content
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: `You are a senior SEO specialist and content strategist with expertise in technical content analysis.
-              When analyzing content, focus on these key areas:
-              
-              For SEO Analysis (score out of 100):
-              - Keyword optimization and placement
-              - Title tag and meta description effectiveness
-              - Header structure (H1, H2, H3) usage
-              - Internal and external linking
-              - Content depth and comprehensiveness
-              - Mobile optimization potential
-              - URL structure and readability
-              - Image optimization and alt text usage
-              
-              For Content Quality (score out of 100):
-              - Writing clarity and readability
-              - Technical accuracy and depth
-              - Content structure and flow
-              - Use of examples and illustrations
-              - Data citation and sourcing
-              - Actionability of information
-              - Currency and timeliness
-              - Expert perspective integration
-              
-              Provide specific, actionable recommendations for improvement in both areas.`
+    const individualResults = await Promise.all(
+      urls.map(async (url: string) => {
+        try {
+          // Add headers to avoid CORS issues
+          const response = await fetch(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; ContentStrategyAI/1.0)',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
             },
-            {
-              role: "user",
-              content: `Analyze this content from ${url}: ${textContent.substring(0, 4000)}`
-            }
-          ],
-          functions: [
-            {
-              name: "analyze_content",
-              description: "Analyze content and provide structured feedback",
-              parameters: {
-                type: "object",
-                properties: {
-                  content: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      wordCount: { type: "number" }
-                    }
-                  },
-                  analytics: {
-                    type: "object",
-                    properties: {
-                      views: { type: "number" },
-                      engagementRate: { type: "number" },
-                      avgFinishTime: { type: "number" },
-                      avgAttentionSpan: { type: "number" },
-                      attentionTimeMinutes: { type: "number" }
-                    }
-                  },
-                  analysis: {
-                    type: "object",
-                    properties: {
-                      summary: {
-                        type: "object",
-                        properties: {
-                          overview: { type: "string" },
-                          strengths: { type: "array", items: { type: "string" } },
-                          weaknesses: { type: "array", items: { type: "string" } }
-                        }
-                      },
-                      seoAnalysis: {
-                        type: "object",
-                        properties: {
-                          score: { type: "string" },
-                          recommendations: { type: "array", items: { type: "string" } }
-                        }
-                      },
-                      contentQuality: {
-                        type: "object",
-                        properties: {
-                          score: { type: "string" },
-                          suggestions: { type: "array", items: { type: "string" } }
-                        }
-                      },
-                      strategy: {
-                        type: "object",
-                        properties: {
-                          targetAudience: { type: "string" },
-                          contentGaps: { type: "array", items: { type: "string" } },
-                          actionItems: { type: "array", items: { type: "string" } }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+          }
+
+          const html = await response.text();
+          
+          // Use cheerio for better HTML parsing
+          const $ = cheerio.load(html);
+          
+          // Remove script and style elements
+          $('script').remove();
+          $('style').remove();
+          
+          // Get text content
+          const textContent = $('body')
+            .text()
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          // Extract title and calculate word count
+          const title = $('title').text().trim() || $('h1').first().text().trim() || url;
+          const wordCount = textContent.split(/\s+/).length;
+
+          // Use OpenAI to analyze the content
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+              {
+                role: "system",
+                content: `You are a senior SEO specialist and content strategist with expertise in technical content analysis.
+                When analyzing content, focus on these key areas:
+                
+                For SEO Analysis (score out of 100):
+                - Keyword optimization and placement
+                - Title tag and meta description effectiveness
+                - Header structure (H1, H2, H3) usage
+                - Internal and external linking
+                - Content depth and comprehensiveness
+                - Mobile optimization potential
+                - URL structure and readability
+                - Image optimization and alt text usage
+                
+                For Content Quality (score out of 100):
+                - Writing clarity and readability
+                - Technical accuracy and depth
+                - Content structure and flow
+                - Use of examples and illustrations
+                - Data citation and sourcing
+                - Actionability of information
+                - Currency and timeliness
+                - Expert perspective integration
+                
+                Provide specific, actionable recommendations for improvement in both areas.
+                
+                Return a structured analysis with:
+                1. Overview of the content's main points and purpose
+                2. Key strengths (at least 3)
+                3. Areas for improvement (at least 3)
+                4. SEO score and specific recommendations
+                5. Content quality score and suggestions
+                6. Target audience and content strategy recommendations`
+              },
+              {
+                role: "user",
+                content: `Analyze this content from ${url}. Title: ${title}. Content: ${textContent.substring(0, 4000)}`
+              }
+            ],
+            functions: [
+              {
+                name: "analyze_content",
+                description: "Analyze content and provide structured feedback",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    content: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        wordCount: { type: "number" }
+                      }
+                    },
+                    analytics: {
+                      type: "object",
+                      properties: {
+                        views: { type: "number" },
+                        engagementRate: { type: "number" },
+                        avgFinishTime: { type: "number" },
+                        avgAttentionSpan: { type: "number" },
+                        attentionTimeMinutes: { type: "number" }
+                      }
+                    },
+                    analysis: {
+                      type: "object",
+                      properties: {
+                        summary: {
+                          type: "object",
+                          properties: {
+                            overview: { type: "string" },
+                            strengths: { type: "array", items: { type: "string" } },
+                            weaknesses: { type: "array", items: { type: "string" } }
+                          }
+                        },
+                        seoAnalysis: {
+                          type: "object",
+                          properties: {
+                            score: { type: "string" },
+                            recommendations: { type: "array", items: { type: "string" } }
+                          }
+                        },
+                        contentQuality: {
+                          type: "object",
+                          properties: {
+                            score: { type: "string" },
+                            suggestions: { type: "array", items: { type: "string" } }
+                          }
+                        },
+                        strategy: {
+                          type: "object",
+                          properties: {
+                            targetAudience: { type: "string" },
+                            contentGaps: { type: "array", items: { type: "string" } },
+                            actionItems: { type: "array", items: { type: "string" } }
+                          }
                         }
                       }
                     }
-                  }
-                },
-                required: ["content", "analysis"]
+                  },
+                  required: ["content", "analysis"]
+                }
               }
-            }
-          ],
-          function_call: { name: "analyze_content" }
-        });
+            ],
+            function_call: { name: "analyze_content" }
+          });
 
-        const analysisResult = JSON.parse(completion.choices[0].message.function_call?.arguments || '{}');
+          const analysisResult = JSON.parse(completion.choices[0].message.function_call?.arguments || '{}');
 
-        // Add placeholder analytics data
-        const placeholderAnalytics = {
-          views: Math.floor(Math.random() * (15000 - 1000) + 1000), // Random between 1,000 and 15,000
-          engagementRate: Math.random() * (0.75 - 0.15) + 0.15, // Random between 15% and 75%
-          avgFinishTime: Math.floor(Math.random() * (300 - 60) + 60), // Random between 60 and 300 seconds
-          avgAttentionSpan: Math.floor(Math.random() * (180 - 30) + 30), // Random between 30 and 180 seconds
-          attentionTimeMinutes: Math.floor(Math.random() * (12 - 2) + 2), // Random between 2 and 12 minutes
-        };
+          // Add placeholder analytics data
+          const placeholderAnalytics = {
+            views: Math.floor(Math.random() * (15000 - 1000) + 1000),
+            engagementRate: Math.random() * (0.75 - 0.15) + 0.15,
+            avgFinishTime: Math.floor(Math.random() * (300 - 60) + 60),
+            avgAttentionSpan: Math.floor(Math.random() * (180 - 30) + 30),
+            attentionTimeMinutes: Math.floor(Math.random() * (12 - 2) + 2),
+          };
 
-        return {
-          url,
-          ...analysisResult,
-          analytics: placeholderAnalytics,
-          status: 'success',
-          analyzedAt: new Date().toISOString()
-        };
+          return {
+            url,
+            content: {
+              title,
+              wordCount
+            },
+            analysis: analysisResult.analysis,
+            analytics: placeholderAnalytics,
+            status: 'success',
+            analyzedAt: new Date().toISOString()
+          };
+        } catch (error) {
+          console.error(`Error processing ${url}:`, error);
+          return {
+            url,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+            status: 'error',
+            analyzedAt: new Date().toISOString()
+          };
+        }
+      })
+    );
 
-      } catch (error) {
-        console.error(`Error analyzing ${url}:`, error);
-        return {
-          url,
-          status: 'error',
-          error: 'Failed to analyze content',
-          analyzedAt: new Date().toISOString()
-        };
-      }
-    }));
+    // Filter out failed analyses
+    const successfulResults = individualResults.filter(result => !result.error);
+    const failedResults = individualResults.filter(result => result.error);
 
-    // Generate overall strategy based on all results
-    const overallStrategy = await generateOverallStrategy(individualResults);
+    if (successfulResults.length === 0) {
+      return NextResponse.json(
+        { 
+          error: 'All analyses failed',
+          failedUrls: failedResults.map(r => ({ url: r.url, error: r.error }))
+        },
+        { status: 500 }
+      );
+    }
+
+    // Generate overall strategy only for successful results
+    const overallStrategy = await generateOverallStrategy(successfulResults);
 
     return NextResponse.json({
-      results: individualResults,
-      overallStrategy
+      success: true,
+      results: successfulResults,
+      failedResults: failedResults,
+      overallStrategy,
     });
-
   } catch (error) {
     console.error('Analysis error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
+      { status: 500 }
+    );
   }
 }

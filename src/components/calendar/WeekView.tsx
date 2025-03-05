@@ -35,11 +35,11 @@ export function WeekView({ contentCalendar, currentDate, onDateChange }: WeekVie
 
   const getContentColor = (contentType: string) => {
     const colors: { [key: string]: string } = {
-      'Blog Post': 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
-      'Social Media': 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
-      'Newsletter': 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
-      'Video': 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100',
-      'Podcast': 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+      'blog-post': 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+      'social-media': 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+      'newsletter': 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100',
+      'video': 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100',
+      'infographic': 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
     };
     return colors[contentType] || 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100';
   };

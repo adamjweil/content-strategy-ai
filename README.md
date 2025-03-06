@@ -19,6 +19,26 @@ A powerful AI-driven content strategy platform built with Next.js and Firebase, 
 - **PDF Generation**: @react-pdf/renderer
 - **TypeScript**: For type safety and better developer experience
 
+## Screenshots
+
+Here's a visual overview of the Content Strategy AI platform:
+
+### Content Analysis Dashboard
+![Content Analysis Dashboard](/public/screenshots/Analysis.png)
+*Comprehensive content analysis with performance metrics, audience insights, and strategic recommendations*
+
+### Content Calendar & Planning
+![Content Calendar Preferences](/public/screenshots/Calendar_prefs.png)
+*Customize your content mix and planning preferences*
+
+### AI-Generated Content Recommendations
+![AI Content Recommendations](/public/screenshots/Recommended_story.png)
+*Smart content recommendations with strategic insights based on your audience and goals*
+
+### URL Management
+![URL Management](/public/screenshots/URLs.png)
+*Easily manage content URLs for analysis and tracking*
+
 ## Prerequisites
 
 Before running this application, make sure you have:
@@ -78,10 +98,6 @@ yarn dev
 - `/src/types`: TypeScript type definitions
 - `/public`: Static assets and images
 
-## Screenshots
-
-[Screenshots of the application will be available in the `/public/screenshots` folder]
-
 ## Features in Detail
 
 ### Content Analysis
@@ -91,17 +107,31 @@ yarn dev
 - View engagement metrics
 - Get AI-powered recommendations
 
+![Content Analysis Dashboard](/public/screenshots/Analysis.png)
+
 ### Content Calendar
 - Plan content strategy
 - Generate content ideas
 - Schedule content publication
 - Track content performance
 
+![Content Calendar Preferences](/public/screenshots/Calendar_prefs.png)
+
 ### Dashboard
 - View analytics overview
 - Manage saved URLs
 - Access recent analyses
 - Export reports to PDF
+
+![URL Management](/public/screenshots/URLs.png)
+
+### Content Recommendations
+- Receive AI-generated content ideas
+- Get strategic insights for content creation
+- Understand audience targeting recommendations
+- Optimize content type and timing
+
+![AI Content Recommendations](/public/screenshots/Recommended_story.png)
 
 ## Deployment
 

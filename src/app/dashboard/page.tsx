@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, orderBy, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { PlusIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import type { SavedURL } from '@/types';
 
@@ -43,8 +43,13 @@ export default function URLsPage() {
   const analyzeSelected = () => {
     if (selectedUrls.length === 0) return;
     
-    // Store selected URLs in localStorage for the analysis page
-    localStorage.setItem('urlsToAnalyze', JSON.stringify(selectedUrls));
+    // Get the actual URLs from the selected IDs
+    const urlsToAnalyze = urls?.docs
+      .filter(doc => selectedUrls.includes(doc.id))
+      .map(doc => doc.data().url as string) || [];
+    
+    // Store actual URLs in localStorage for the analysis page
+    localStorage.setItem('urlsToAnalyze', JSON.stringify(urlsToAnalyze));
     router.push('/dashboard/analysis');
   };
 
@@ -85,29 +90,33 @@ export default function URLsPage() {
         {loading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}
         
-        <div className="space-y-3">
+        <div className="space-y-4">
           {urls?.docs.map((doc) => {
-            const url = { id: doc.id, ...doc.data() } as SavedURL;
+            const url = doc.data() as SavedURL;
             return (
-              <div key={url.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                <input
-                  type="checkbox"
-                  checked={selectedUrls.includes(url.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedUrls([...selectedUrls, url.id]);
-                    } else {
-                      setSelectedUrls(selectedUrls.filter(id => id !== url.id));
-                    }
-                  }}
-                  className="h-5 w-5 text-blue-500"
-                />
-                <span className="flex-1">{url.url}</span>
+              <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedUrls.includes(doc.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUrls(prev => [...prev, doc.id]);
+                      } else {
+                        setSelectedUrls(prev => prev.filter(id => id !== doc.id));
+                      }
+                    }}
+                    className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <a href={url.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    {url.url}
+                  </a>
+                </div>
                 <button
-                  onClick={() => deleteUrl(url.id)}
-                  className="text-red-500 hover:bg-red-50 p-2 rounded-lg"
+                  onClick={() => deleteUrl(doc.id)}
+                  className="text-red-500 hover:text-red-700"
                 >
-                  <XMarkIcon className="w-5 h-5" />
+                  <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>
             );

@@ -1,156 +1,104 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { auth } from '@/lib/firebase/config';
 import { 
-  Auth,
   User,
-  GoogleAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  onAuthStateChanged
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  error: Error | null;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  error: null,
+  login: async () => {},
+  signup: async () => {},
+  logout: async () => {},
+  signOut: async () => {},
+});
 
-export const useAuth = () => useContext(AuthContext);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      console.log('Auth state changed:', user?.email);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      if (user && window.location.pathname === '/login') {
-        console.log('User is authenticated, redirecting to dashboard...');
-        router.replace('/dashboard');
-      } else if (!user && window.location.pathname === '/dashboard') {
-        console.log('User is not authenticated, redirecting to login...');
-        router.replace('/login');
-      }
-    }
-  }, [user, loading, router]);
-
-  const createSession = async (user: User) => {
-    console.log('Creating session for user:', user.email);
+  const login = async (email: string, password: string) => {
     try {
-      const idToken = await user.getIdToken();
-      console.log('Got ID token, creating session cookie...');
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
-      
-      if (!response.ok) {
-        console.error('Session creation failed:', response.status, response.statusText);
-        const errorData = await response.json();
-        console.error('Error details:', errorData);
-        throw new Error('Failed to create session');
-      }
-      
-      console.log('Session created successfully!');
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.error('Error creating session:', error);
+      console.error('Login error:', error);
+      setError(error instanceof Error ? error : new Error('Login failed'));
       throw error;
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    console.log('Starting signup process...');
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log('User created, creating session...');
-    await createSession(userCredential.user);
-    console.log('Creating user profile in Firestore...');
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
-      email,
-      createdAt: new Date().toISOString()
-    });
-    console.log('Signup process complete!');
-  };
-
-  const signIn = async (email: string, password: string) => {
-    console.log('Starting signin process...');
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log('User authenticated, creating session...');
-    await createSession(userCredential.user);
-    console.log('Signin process complete!');
-  };
-
-  const signInWithGoogle = async () => {
-    console.log('Starting Google signin process...');
+  const signup = async (email: string, password: string) => {
     try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      console.log('Google auth successful, creating session...');
-      await createSession(userCredential.user);
-      
-      console.log('Creating/updating user profile in Firestore...');
-      try {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          email: userCredential.user.email,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        }, { merge: true });
-        console.log('Firestore document created/updated successfully');
-      } catch (firestoreError) {
-        console.error('Firestore error:', firestoreError);
-        // Continue even if Firestore fails - user is still authenticated
-        console.log('Continuing despite Firestore error...');
-      }
-      
-      console.log('Google signin process complete!');
-    } catch (error: any) {
-      console.error('Google signin error:', error);
-      if (error.code === 'permission-denied') {
-        throw new Error('Unable to create user profile. Please try again later.');
-      }
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError(error instanceof Error ? error : new Error('Signup failed'));
       throw error;
     }
   };
 
   const logout = async () => {
-    await firebaseSignOut(auth);
-    await fetch('/api/auth/session', { method: 'DELETE' });
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setError(error instanceof Error ? error : new Error('Logout failed'));
+      throw error;
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const value = {
     user,
     loading,
-    signIn,
-    signUp,
-    signInWithGoogle,
-    logout
+    error,
+    login,
+    signup,
+    logout,
+    signOut: handleSignOut
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
 } 

@@ -1,19 +1,12 @@
-import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase/admin';
-import { cookies } from 'next/headers';
+// This file can be removed as we'll handle auth client-side with Firebase Auth
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 export async function GET() {
-  try {
-    const session = cookies().get('session');
-
-    if (!session) {
-      return NextResponse.json({ isAuthenticated: false }, { status: 401 });
-    }
-
-    const decodedClaims = await adminAuth.verifySessionCookie(session.value, true);
-    return NextResponse.json({ isAuthenticated: true, user: decodedClaims }, { status: 200 });
-
-  } catch (error) {
-    return NextResponse.json({ isAuthenticated: false }, { status: 401 });
-  }
+  return new Response(JSON.stringify({ 
+    message: 'Auth is handled client-side with Firebase Auth',
+    status: 'static' 
+  }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 } 

@@ -18,7 +18,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ['*'],
+      bodySizeLimit: '2mb'
+    },
     serverComponentsExternalPackages: ['firebase-admin']
   },
   // Add this configuration to specify which routes should use Node.js runtime

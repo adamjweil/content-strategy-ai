@@ -18,13 +18,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    // Combine all experimental features in one object
-    runtime: 'nodejs',
-    serverComponents: true,
-    serverActions: {
-      bodySizeLimit: '2mb', // Optional: specify size limit
-      allowedOrigins: ['*']  // Optional: specify allowed origins
-    }
+    serverActions: true,
+    serverComponentsExternalPackages: ['firebase-admin']
   },
   // Add this configuration to specify which routes should use Node.js runtime
   // Note: rewrites won't work with static export for Firebase hosting

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import * as cheerio from 'cheerio';
+import { AnalysisResult } from '@/types';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function generateOverallStrategy(individualResults: any[]) {
+async function generateOverallStrategy(individualResults: AnalysisResult[]) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
@@ -238,18 +239,25 @@ async function generateOverallStrategy(individualResults: any[]) {
 export async function POST(request: Request) {
   try {
     const { urls } = await request.json();
+    
+    console.log('Received URLs for analysis:', urls);
 
     if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key not configured');
       return NextResponse.json(
         { error: 'OpenAI API key is not configured' },
         { status: 500 }
       );
     }
 
+    console.log('Starting URL processing...');
+
     // Process each URL
     const individualResults = await Promise.all(
       urls.map(async (url: string) => {
         try {
+          console.log(`Fetching URL: ${url}`);
+          
           // Add headers to avoid CORS issues
           const response = await fetch(url, {
             headers: {
@@ -260,10 +268,13 @@ export async function POST(request: Request) {
           });
 
           if (!response.ok) {
-            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+            const error = `Failed to fetch ${url}: ${response.status} ${response.statusText}`;
+            console.error(error);
+            throw new Error(error);
           }
 
           const html = await response.text();
+          console.log(`Successfully fetched ${url}, content length: ${html.length}`);
           
           // Use cheerio for better HTML parsing
           const $ = cheerio.load(html);

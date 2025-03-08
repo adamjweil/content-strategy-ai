@@ -1,0 +1,21 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["warn", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_",
+      "ignoreRestSiblings": true
+    }],
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "varsIgnorePattern": "^(GET|POST|PUT|DELETE|PATCH)$"
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["**/route.ts"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off"
+      }
+    }
+  ]
+} 

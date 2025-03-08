@@ -1,60 +1,13 @@
 "use client";
 
-import { useState } from 'react';
 import React from 'react';
+import { OverallStrategy } from '@/types';
 
-interface OverallStrategy {
-  contentAudit: {
-    contentTypes: Array<{
-      type: string;
-      frequency: string;
-      effectiveness: string;
-    }>;
-    writingStyles: Array<{
-      style: string;
-      usage: string;
-      impact: string;
-    }>;
-  };
-  audienceAnalysis: {
-    primaryAudiences: string[];
-    audienceNeeds: string[];
-    engagementPatterns: string;
-  };
-  contentGaps: Array<{
-    topic: string;
-    opportunity: string;
-    priority: string;
-  }>;
-  recommendations: {
-    contentMix: string;
-    topicClusters: string[];
-    contentCalendar: Array<{
-      contentType: string;
-      frequency: string;
-      focus: string;
-    }>;
-  };
-  brandVoice: {
-    currentTone: string;
-    consistencyScore: string;
-    improvements: string[];
-  };
-  actionPlan: Array<{
-    action: string;
-    timeline: string;
-    expectedImpact: string;
-  }>;
-  metrics?: {
-    views: number;
-    engagementRate: number;
-    avgFinishTime: number;
-    avgAttentionSpan: number;
-    attentionTime: number;
-  };
+interface OverallStrategyCardProps {
+  strategy: OverallStrategy;
 }
 
-export function OverallStrategyCard({ strategy }: { strategy: OverallStrategy }) {
+export default function OverallStrategyCard({ strategy }: OverallStrategyCardProps) {
   if (!strategy || !strategy.audienceAnalysis) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">

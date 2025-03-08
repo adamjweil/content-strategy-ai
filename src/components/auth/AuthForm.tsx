@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FcGoogle } from 'react-icons/fc';
+import { useRouter } from 'next/navigation';
 import { HiOutlineMail } from 'react-icons/hi';
 import { RiLockPasswordLine } from 'react-icons/ri';
 
@@ -12,53 +11,38 @@ interface AuthFormProps {
   mode: 'login' | 'signup';
 }
 
+interface FormError {
+  message: string;
+  field?: string;
+}
+
 export default function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<FormError | null>(null);
   
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { login, signup } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Starting authentication process...');
-    setError('');
     setLoading(true);
+    setFormError(null);
 
     try {
-      if (mode === 'signup') {
-        console.log('Attempting signup...');
-        await signUp(email, password);
-        console.log('Signup successful!');
+      if (mode === 'login') {
+        await login(email, password);
       } else {
-        console.log('Attempting login...');
-        await signIn(email, password);
-        console.log('Login successful!');
+        await signup(email, password);
       }
-      console.log('Redirecting to dashboard...');
-      router.replace('/dashboard');
-    } catch (err: any) {
-      console.error('Authentication error:', err);
-      setError(err.message);
+      router.push('/dashboard');
+    } catch (err) {
+      setFormError({
+        message: err instanceof Error ? err.message : 'An unknown error occurred'
+      });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    console.log('Starting Google sign-in process...');
-    try {
-      console.log('Calling signInWithGoogle...');
-      await signInWithGoogle();
-      console.log('Google sign-in successful!');
-      console.log('Creating session...');
-      console.log('Redirecting to dashboard...');
-      router.replace('/dashboard');
-    } catch (err: any) {
-      console.error('Google sign-in error:', err);
-      setError(err.message);
     }
   };
 
@@ -76,19 +60,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </p>
         </div>
 
-        {error && (
+        {formError && (
           <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm">
-            {error}
+            {formError.message}
           </div>
         )}
-
-        <button
-          onClick={handleGoogleSignIn}
-          className="flex items-center justify-center w-full gap-2 px-4 py-2.5 mb-6 text-[#475569] bg-white border border-[#e2e8f0] rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <FcGoogle className="w-5 h-5" />
-          <span>Continue with Google</span>
-        </button>
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
@@ -150,7 +126,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <p className="mt-6 text-center text-[#64748b]">
           {mode === 'login' ? (
             <>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-brand hover:text-brand/80 font-medium">
                 Sign up
               </Link>

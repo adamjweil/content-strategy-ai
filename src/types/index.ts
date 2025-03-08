@@ -51,7 +51,7 @@ export interface Analysis {
   urlIds: string[];
   urls: string[];
   results: AnalysisResult[];
-  overallStrategy: any; // You can create a specific type for this
+  overallStrategy: OverallStrategy;
   createdAt: string;
 }
 
@@ -71,7 +71,7 @@ export interface ContentItem {
   };
 }
 
-export type OverallStrategy = {
+export interface OverallStrategy {
   contentAudit: {
     contentTypes: Array<{
       type: string;
@@ -120,4 +120,4 @@ export type OverallStrategy = {
     avgAttentionSpan: number;
     attentionTime: number;
   };
-}; 
+} 

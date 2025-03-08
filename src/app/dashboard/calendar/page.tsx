@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase/config';
-import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import type { Analysis, ContentItem } from '@/types';
 import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
@@ -105,57 +105,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [contentPreferences, setContentPreferences] = useState<{ [key: string]: number }>({});
 
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchLatestAnalysis = async () => {
-      try {
-        setLoading(true);
-        const analysesQuery = query(
-          collection(db, 'analyses'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
-          limit(1)
-        );
-
-        const snapshot = await getDocs(analysesQuery);
-        if (!snapshot.empty) {
-          const analysis = snapshot.docs[0].data() as Analysis;
-          const calendar = generateContentCalendar(analysis);
-          setContentCalendar(calendar);
-        }
-      } catch (error) {
-        console.error('Error fetching analysis:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLatestAnalysis();
-  }, [user]);
-
-  const handlePreferencesChange = (newPreferences: { [key: string]: number }) => {
-    setContentPreferences(newPreferences);
-    if (user) {
-      // Update the content calendar based on new preferences
-      const analysesQuery = query(
-        collection(db, 'analyses'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc'),
-        limit(1)
-      );
-
-      getDocs(analysesQuery).then((snapshot) => {
-        if (!snapshot.empty) {
-          const analysis = snapshot.docs[0].data() as Analysis;
-          const calendar = generateContentCalendar(analysis, newPreferences);
-          setContentCalendar(calendar);
-        }
-      });
-    }
-  };
-
-  const generateContentCalendar = (analysis: Analysis, preferences: { [key: string]: number } = contentPreferences) => {
+  const generateContentCalendar = useCallback((analysis: Analysis, preferences: { [key: string]: number } = contentPreferences) => {
     const calendar: CalendarItem[] = [];
     const startDate = new Date();
     startDate.setDate(1);
@@ -188,7 +138,6 @@ export default function CalendarPage() {
     for (const [type, frequency] of Object.entries(contentTypes)) {
       for (let i = 0; i < frequency; i++) {
         if (dateIndex < dates.length) {
-          // Rotate through topics and audiences for variety
           const focus = topics[i % topics.length];
           const audience = audiences[i % audiences.length];
           
@@ -222,6 +171,56 @@ export default function CalendarPage() {
     }
 
     return calendar.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [contentPreferences]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchLatestAnalysis = async () => {
+      try {
+        setLoading(true);
+        const analysesQuery = query(
+          collection(db, 'analyses'),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc'),
+          limit(1)
+        );
+
+        const snapshot = await getDocs(analysesQuery);
+        if (!snapshot.empty) {
+          const analysis = snapshot.docs[0].data() as Analysis;
+          const calendar = generateContentCalendar(analysis);
+          setContentCalendar(calendar);
+        }
+      } catch (error) {
+        console.error('Error fetching analysis:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestAnalysis();
+  }, [user, generateContentCalendar]);
+
+  const handlePreferencesChange = (newPreferences: { [key: string]: number }) => {
+    setContentPreferences(newPreferences);
+    if (user) {
+      // Update the content calendar based on new preferences
+      const analysesQuery = query(
+        collection(db, 'analyses'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
+
+      getDocs(analysesQuery).then((snapshot) => {
+        if (!snapshot.empty) {
+          const analysis = snapshot.docs[0].data() as Analysis;
+          const calendar = generateContentCalendar(analysis, newPreferences);
+          setContentCalendar(calendar);
+        }
+      });
+    }
   };
 
   return (

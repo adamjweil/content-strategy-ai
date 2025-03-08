@@ -6,7 +6,7 @@ const auth = getAuth(getFirebaseAdminApp());
 
 // Add dynamic export for static generation
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   try {

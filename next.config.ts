@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverActions: true,
+  },
+  // Add this configuration to specify which routes should use Node.js runtime
+  experimental: {
+    runtime: 'nodejs',
+    serverComponents: true,
+  },
   // Note: rewrites won't work with static export for Firebase hosting
   // If you need server functionality, you'll need Firebase Functions or Cloud Run
   // Commenting out rather than removing in case you need this later

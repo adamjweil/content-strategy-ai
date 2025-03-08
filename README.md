@@ -19,6 +19,8 @@ A powerful AI-driven content strategy platform built with Next.js and Firebase, 
 - **PDF Generation**: @react-pdf/renderer
 - **TypeScript**: For type safety and better developer experience
 
+xyz
+
 ## Screenshots
 
 Here's a visual overview of the Content Strategy AI platform:
